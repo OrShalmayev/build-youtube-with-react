@@ -19,7 +19,7 @@
     "node_modules",
     "client/node_modules"
   ],
-  "author": "Reed Barger",
+  "author": "Or Shalmayev",
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "2.12.0",
