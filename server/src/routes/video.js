@@ -546,7 +546,7 @@ async function deleteVideo(req, res) {
   }
 
   // delete many
-  ['view', 'videoLike', 'comments'].forEach( model => {
+  ['view', 'videoLike', 'comments'].forEach( async model => {
     await prisma.model.deleteMany({
       where: {
         videoId: {
