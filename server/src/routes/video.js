@@ -553,7 +553,7 @@ async function deleteVideo(req, res) {
           equals: req.params.videoId
         }
       }
-    });
+    });//END deleteMany
   });
 
   // delete one
