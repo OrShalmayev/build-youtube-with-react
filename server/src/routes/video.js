@@ -554,7 +554,7 @@ async function deleteVideo(req, res) {
         }
       }
     });//END deleteMany
-  });//testing comment corrected
+  });//testing did something wrong 
 
   // delete one
   await prisma.video.delete({
