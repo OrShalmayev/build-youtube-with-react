@@ -5,23 +5,10 @@ import { getVideoViews } from './video';
 
 const prisma = new PrismaClient();
 
-function getUserRoutes() {
-  const router = express.Router();
 
-  router.get('/liked-videos', protect, getLikedVideos);
-  router.get('/history', protect, getHistory);
-
-  return router;
-}
-
-async function getLikedVideos(req, res) {
-  await getVideos('videoLike', req, res);
-}
-
-async function getHistory(req, res) {
-  await getVideos('view', req, res);
-}
-
+/**
+ * Helpers
+ */
 async function getVideos(model, req, res) {
   const videoRelations = await prisma[model].findMany({
     where: {
@@ -53,7 +40,90 @@ async function getVideos(model, req, res) {
   res.status(200).json({videos});
 }
 
-async function toggleSubscribe(req, res, next) {}
+/**
+ * Router
+ */
+function getUserRoutes() {
+  const router = express.Router();
+
+  router.get('/liked-videos', protect, getLikedVideos);
+  router.get('/history', protect, getHistory);
+  router.get('/:userId/toggle-subscribe', protect, toggleSubscribe);
+
+  return router;
+}
+
+/**
+ * Controllers
+ */
+async function getLikedVideos(req, res) {
+  await getVideos('videoLike', req, res);
+}
+
+async function getHistory(req, res) {
+  await getVideos('view', req, res);
+}
+
+async function toggleSubscribe(req, res, next) {
+  if (req.user.id === req.params.userId) {
+    return next({
+      message: "You cannot subscribe to your own channel",
+      statusCode: 400
+    });
+  }
+
+  // check if user exists
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.params.userId
+    }
+  });
+
+  // user not exists
+  if (!user) {
+    return next({
+      message: `No use found with id: "${req.params.userId}"`,
+      statusCode: 404
+    });
+  }
+
+  // the user does exists
+  const isSubscribed = await prisma.subscription.findFirst({
+    where: {
+      subscriberId:{
+        equals: req.user.id
+      },
+      subscribedToId: {
+        equals: req.params.userId
+      }
+    }
+  });
+
+  if (isSubscribed) {
+    await prisma.subscription.delete({
+      where: {
+        id: isSubscribed.id
+      }
+    });
+  } else {
+    await prisma.subscription.create({
+      data:{
+        subscriber: {
+          connect: {
+            id: req.user.id
+          }
+        },
+        subscribedTo: {
+          connect: {
+            id: req.params.userId
+          }
+        }
+      }
+    });
+  }
+
+  res.status(200).json({});
+}
 
 async function getFeed(req, res) {}
 
